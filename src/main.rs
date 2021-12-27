@@ -34,7 +34,7 @@ fn main() -> Result<(), String> {
     let mut board = GameBoard::new();
 
     'running: loop {
-        const FRAMES_PER_SEC: u32 = 30;
+        const FRAMES_PER_SEC: u32 = 60;
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -46,9 +46,9 @@ fn main() -> Result<(), String> {
             }
         }
         canvas.clear();
-
-        board.draw(&mut canvas);
-
+        unsafe {
+            board.draw(&mut canvas);
+        }
         canvas.present();
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMES_PER_SEC));
     }

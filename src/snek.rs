@@ -48,9 +48,10 @@ impl GameBoard {
 
     }
 
-    pub fn draw(&self, canvas: &mut Canvas<Window>) {
+    pub unsafe fn draw(&self, canvas: &mut Canvas<Window>) {
         const SPACING: usize = 40;
-        canvas.set_draw_color(pixels::Color::RGB(0, 50, 0));
+        static mut green: u8 = 0;
+        canvas.set_draw_color(pixels::Color::RGB(0, green, 0));
         for x in (0..800).step_by(SPACING) {
             canvas.draw_line(Point::new(x, 0), Point::new(x, 599));
         }
@@ -61,6 +62,7 @@ impl GameBoard {
         canvas.draw_line(Point::new(0, 599), Point::new(799, 599));
         
         canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
+        green = green.wrapping_add(1);
     }
 
 
