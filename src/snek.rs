@@ -10,17 +10,19 @@ enum SnekDirection {
     South,
 }
 
+#[derive(Clone)]
 enum SnekObject {
-    SnekHead,
-    SnekSegment,
-    SnekBerry,
-    SnekWall,
+    Head,
+    Segment,
+    Berry,
+    Wall,
+    Empty,
 }
 
 pub struct GameBoard {
     x_max: usize,
     y_max: usize,
-    board: Vec<Option<SnekObject>>,
+    board: Vec<SnekObject>,
 }
 
 impl GameBoard {
@@ -28,12 +30,16 @@ impl GameBoard {
     pub fn new() -> GameBoard {
         const X_MAX: usize = 50;
         const Y_MAX: usize = 50;
-        let board: Vec<Option<SnekObject>> = Vec::with_capacity(Y_MAX * X_MAX);
+        let board: Vec<SnekObject> = vec![SnekObject::Empty; Y_MAX * X_MAX];
         GameBoard {
             x_max: X_MAX,
             y_max: Y_MAX,
             board,
         }
+    }
+
+    fn get_cell(&self, x: i32, y: i32) -> SnekObject {
+        SnekObject::Empty
     }
 
     // Called every game step
@@ -43,13 +49,17 @@ impl GameBoard {
     }
 
     pub fn draw(&self, canvas: &mut Canvas<Window>) {
-        let start = Point::new(0, 100);
-        let end = Point::new(800, 100);
-
-        // canvas.set_draw_color(Color::RGB(0, 0, 0));
-        // let color = ;
-        canvas.set_draw_color(pixels::Color::RGB(0, 255, 0));
-        canvas.draw_line(start, end);
+        const SPACING: usize = 40;
+        canvas.set_draw_color(pixels::Color::RGB(0, 50, 0));
+        for x in (0..800).step_by(SPACING) {
+            canvas.draw_line(Point::new(x, 0), Point::new(x, 599));
+        }
+        for y in (0..640).step_by(SPACING) {
+            canvas.draw_line(Point::new(0, y), Point::new(799, y));
+        }
+        canvas.draw_line(Point::new(799, 0), Point::new(799, 599));
+        canvas.draw_line(Point::new(0, 599), Point::new(799, 599));
+        
         canvas.set_draw_color(pixels::Color::RGB(0, 0, 0));
     }
 
