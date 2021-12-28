@@ -33,8 +33,8 @@ fn main() -> Result<(), String> {
     let mut event_pump = sdl_context.event_pump()?;
     // FIXME: dimensions on board should be constant and scale up to canvas resolution.
     // FIXME: for now, they're fixed and we assume we're at 1024x768.
-    let mut board = SnekGame::new(32, 24);
-
+    let mut game = SnekGame::new(32, 24);
+    let mut ticks = 0;
     'running: loop {
         const FRAMES_PER_SEC: u32 = 60;
         for event in event_pump.poll_iter() {
@@ -48,11 +48,22 @@ fn main() -> Result<(), String> {
             }
         }
         canvas.clear();
-        board.step();
-        board.draw(&mut canvas);
+        game.step();
+        game.draw(&mut canvas);
         canvas.present();
+
+        println!("Tick = {}", ticks);
+        println!("{:?}", game);
+        println!("{}", game);
+
+        if game.game_over {
+            println!("Game Over!");
+            break 'running;
+        }
+        
         // ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMES_PER_SEC));
         ::std::thread::sleep(Duration::new(1, 0)); // 1 second delay for debug
+        ticks += 1;
     }
 
     Ok(())
