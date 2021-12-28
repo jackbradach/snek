@@ -38,29 +38,36 @@ pub struct SnekGame {
     snek_head_pos: (i32, i32),
     snek_head_dir: SnekDirection,
     snek_length: usize,
-    snek_seg_pos: Vec<(usize, usize)>
+    snek_segments: Vec<(usize, usize)>,
+    snek_segments_pending: usize,
 }
 
 impl SnekGame {
 
     pub fn new(xsize: usize, ysize: usize) -> SnekGame {
-        let mut board: HashMap<(usize, usize), SnekObject> = HashMap::new();
-
         let snek_head_pos = (10, 10);
         let snek_head_dir = SnekDirection::East;
-        let snek_length = 4;
+        let snek_length = 3;
         let mut game = SnekGame {
                 game_over: false,
                 xsize,
                 ysize,
-                board,
+                board: HashMap::new(),
                 snek_head_pos,
                 snek_head_dir,
                 snek_length,
-                snek_seg_pos: Vec::new(),
+                snek_segments: Vec::new(),
+                snek_segments_pending: 3,
         };
         game.set_cell(snek_head_pos.0 as usize, snek_head_pos.1 as usize, SnekObject::Head);
+        // for i in 0..snek_length {
+            // let seg_x = snek_head_pos.0 - 1 - i as i32;
+            // game.set_cell((snek_head_pos.0 - 1 - i as i32) as usize, snek_head_pos.1 as usize, SnekObject::Segment);
+            // self.snek_seg_pos.push(())
+        // }
+
         game.set_cell(14, 10, SnekObject::Berry);
+        let mut ticks = 0;
         game.set_cell(20, 10, SnekObject::Rock);
         game
     }
@@ -114,6 +121,10 @@ impl SnekGame {
         }
     }
 
+    pub fn set_snekdir(&mut self, dir: SnekDirection) {
+        self.snek_head_dir = dir;
+    }
+
     // Called every game step
     pub fn step(&mut self) {
         // Check if game is in end state.  No-op if true.
@@ -142,26 +153,49 @@ impl SnekGame {
 
         match self.get_cell(xnew, ynew) {
             SnekObject::Berry => {
-                println!("Snake ate a berry @ ({}, {})!", xnew, ynew);
-                self.snek_length += 1;
-                // When a berry is eaten, snake head moves one and leaves a new
-                // segment behind.
+                println!("Snek ate a berry @ ({}, {})!", xnew, ynew);
+                self.snek_segments_pending += 1;
             },
             SnekObject::Wall => {
-                println!("Snake hit the wall @ ({}, {})!", xnew, ynew);
+                println!("Snek hit the wall @ ({}, {})!", xnew, ynew);
                 self.game_over = true;
                 return;
             },
             SnekObject::Rock => {
-                println!("Snake hit a rock @ ({}, {})!", xnew, ynew);
+                println!("Snek hit a rock @ ({}, {})!", xnew, ynew);
+                self.game_over = true;
+                return;
+            },
+            SnekObject::Segment => {
+                println!("Snek hit Snek @ ({}, {})!", xnew, ynew);
                 self.game_over = true;
                 return;
             },
             _ => { /* WARK! */ },
         }
+
+        /* Move the head on the board and update the head position. */
         self.board.remove(&(x.try_into().unwrap(), y.try_into().unwrap()));
         self.set_cell(xnew.try_into().unwrap(), ynew.try_into().unwrap(), SnekObject::Head);
         self.snek_head_pos = (xnew, ynew);
+
+        /* Update the segment positions.  If we have segments waiting to be appended to Snek,
+         * insert a new one at current head (x,y).  If head element (x,y) == head (x,y), don't
+         * draw it and don't pop tail. */
+        if self.snek_segments_pending > 0 {
+            self.snek_segments.insert(0, (x as usize, y as usize));
+            self.snek_segments_pending -= 1;
+        }
+
+        // if self.snek_segments[0] != (x as usize, y as usize) {
+        //     self.snek_segments.pop();
+        // }
+        for i in 0..self.snek_segments.len() {
+            let segx = self.snek_segments[0].clone().0;
+            let segy = self.snek_segments[0].clone().1;
+            
+            self.set_cell(segx, segy, SnekObject::Segment);
+        }
 
     }
 
@@ -257,3 +291,57 @@ impl fmt::Display for SnekGame {
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::Duration;
+   
+    fn do_game_steps(game: &mut SnekGame, ticks: usize) {
+        for _ in 0..ticks {
+            game.step();
+            println!("{:?}", game);
+            println!("{}", game);
+            if game.game_over {
+                return;
+            }
+            ::std::thread::sleep(Duration::new(0, 100_000_000)); // 1 second delay for debug
+        }
+    }
+    
+    #[test]
+    fn test_snek_hit_snek() {
+        let mut game = SnekGame::new(32, 24);
+        game.set_snekdir(SnekDirection::North);
+        do_game_steps(&mut game, 3);
+        game.set_snekdir(SnekDirection::East);
+        do_game_steps(&mut game, 3);
+        game.set_snekdir(SnekDirection::South);
+        do_game_steps(&mut game, 3);
+        game.set_snekdir(SnekDirection::West);
+        do_game_steps(&mut game, 3);
+        assert_eq!(game.game_over, true);
+    }
+
+    #[test]
+    fn test_snek_hit_wall() {
+        let mut game = SnekGame::new(32, 24);
+        game.set_snekdir(SnekDirection::North);
+        do_game_steps(&mut game, 24);
+        assert_eq!(game.game_over, true);
+
+        let mut game = SnekGame::new(32, 24);
+        game.set_snekdir(SnekDirection::East);
+        do_game_steps(&mut game, 32);
+        assert_eq!(game.game_over, true);
+
+        let mut game = SnekGame::new(32, 24);
+        game.set_snekdir(SnekDirection::West);
+        do_game_steps(&mut game, 32);
+
+        let mut game = SnekGame::new(32, 24);
+        game.set_snekdir(SnekDirection::South);
+        do_game_steps(&mut game, 24);
+    }
+
+}
