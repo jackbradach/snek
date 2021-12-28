@@ -16,7 +16,7 @@ fn main() -> Result<(), String> {
     video_subsystem.gl_attr().set_context_minor_version(0);
 
     let window = video_subsystem
-        .window("Snek!", 800, 600)
+        .window("Snek!", 1024, 768)
         .position_centered()
         .opengl()
         .build()
@@ -46,9 +46,7 @@ fn main() -> Result<(), String> {
             }
         }
         canvas.clear();
-        unsafe {
-            board.draw(&mut canvas);
-        }
+        board.draw_grid(&mut canvas);
         canvas.present();
         ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMES_PER_SEC));
     }
