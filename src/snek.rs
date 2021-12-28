@@ -57,7 +57,7 @@ impl SnekGame {
                 snek_head_dir,
                 snek_length,
                 snek_segments: Vec::new(),
-                snek_segments_pending: 3,
+                snek_segments_pending: 6,
         };
         game.set_cell(snek_head_pos.0 as usize, snek_head_pos.1 as usize, SnekObject::Head);
         // for i in 0..snek_length {
@@ -179,6 +179,14 @@ impl SnekGame {
         self.set_cell(xnew.try_into().unwrap(), ynew.try_into().unwrap(), SnekObject::Head);
         self.snek_head_pos = (xnew, ynew);
 
+
+        /* Clear last round's segments from the board. */
+        for i in 0..self.snek_segments.len() {
+            let segx = self.snek_segments[i].clone().0;
+            let segy = self.snek_segments[i].clone().1;
+            self.board.remove(&(segx, segy));
+        }
+
         /* Update the segment positions.  If we have segments waiting to be appended to Snek,
          * insert a new one at current head (x,y).  If head element (x,y) == head (x,y), don't
          * draw it and don't pop tail. */
@@ -187,15 +195,18 @@ impl SnekGame {
             self.snek_segments_pending -= 1;
         }
 
-        // if self.snek_segments[0] != (x as usize, y as usize) {
-        //     self.snek_segments.pop();
-        // }
+        if self.snek_segments[0] != (x as usize, y as usize) {
+            self.snek_segments.insert(0, (x as usize, y as usize));
+            self.snek_segments.pop();
+        }
+        
         for i in 0..self.snek_segments.len() {
-            let segx = self.snek_segments[0].clone().0;
-            let segy = self.snek_segments[0].clone().1;
-            
+            let segx = self.snek_segments[i].clone().0;
+            let segy = self.snek_segments[i].clone().1;
             self.set_cell(segx, segy, SnekObject::Segment);
         }
+
+        
 
     }
 
@@ -313,13 +324,13 @@ mod tests {
     fn test_snek_hit_snek() {
         let mut game = SnekGame::new(32, 24);
         game.set_snekdir(SnekDirection::North);
-        do_game_steps(&mut game, 3);
+        do_game_steps(&mut game, 2);
         game.set_snekdir(SnekDirection::East);
-        do_game_steps(&mut game, 3);
+        do_game_steps(&mut game, 2);
         game.set_snekdir(SnekDirection::South);
-        do_game_steps(&mut game, 3);
+        do_game_steps(&mut game, 2);
         game.set_snekdir(SnekDirection::West);
-        do_game_steps(&mut game, 3);
+        do_game_steps(&mut game, 2);
         assert_eq!(game.game_over, true);
     }
 
@@ -342,6 +353,21 @@ mod tests {
         let mut game = SnekGame::new(32, 24);
         game.set_snekdir(SnekDirection::South);
         do_game_steps(&mut game, 24);
+    }
+
+    #[test]
+    fn test_snek_diagonal() {
+        let mut game = SnekGame::new(32, 24);
+        game.set_snekdir(SnekDirection::North);
+        do_game_steps(&mut game, 1);
+        game.set_snekdir(SnekDirection::East);
+        do_game_steps(&mut game, 1);
+        game.set_snekdir(SnekDirection::South);
+        do_game_steps(&mut game, 2);
+        game.set_snekdir(SnekDirection::West);
+        do_game_steps(&mut game, 32);
+        assert_eq!(game.game_over, true);
+
     }
 
 }
