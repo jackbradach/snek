@@ -5,7 +5,7 @@ use std::time::Duration;
 
 // use snek;
 mod snek;
-use snek::GameBoard;
+use snek::SnekGame;
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -31,7 +31,9 @@ fn main() -> Result<(), String> {
     canvas.present();
 
     let mut event_pump = sdl_context.event_pump()?;
-    let mut board = GameBoard::new();
+    // FIXME: dimensions on board should be constant and scale up to canvas resolution.
+    // FIXME: for now, they're fixed and we assume we're at 1024x768.
+    let mut board = SnekGame::new(32, 24);
 
     'running: loop {
         const FRAMES_PER_SEC: u32 = 60;
@@ -46,9 +48,11 @@ fn main() -> Result<(), String> {
             }
         }
         canvas.clear();
-        board.draw_grid(&mut canvas);
+        board.step();
+        board.draw(&mut canvas);
         canvas.present();
-        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMES_PER_SEC));
+        // ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMES_PER_SEC));
+        ::std::thread::sleep(Duration::new(1, 0)); // 1 second delay for debug
     }
 
     Ok(())
