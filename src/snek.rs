@@ -10,6 +10,7 @@ use colored::{Colorize};
 use sdl2::pixels::{Color};
 use sdl2::rect::Point;
 use sdl2::render::{Canvas};
+use sdl2::rect::Rect;
 // use sdl2::surface::Surface;
 use sdl2::video::{Window};
 
@@ -212,12 +213,21 @@ impl SnekGame {
     }
 
     pub fn draw(&self, canvas: &mut Canvas<Window>) {
-        self.draw_grid(canvas);
         self.draw_head(canvas);
+        self.draw_rocks(canvas);
+        self.draw_berries(canvas);
+        self.draw_grid(canvas);
     }
 
-    fn draw_head(&self, _canvas: &mut Canvas<Window>) {
-
+    fn draw_head(&self, canvas: &mut Canvas<Window>) {
+        const HEAD_COLOR: Color = Color::RGB(0, 80, 80);
+        let pos = self.snek_head_pos;
+        let x = pos.x * 32;
+        let y = pos.y * 32;
+        let orig_color = canvas.draw_color();
+        canvas.set_draw_color(HEAD_COLOR);
+        canvas.fill_rect(Rect::new(x, y, 32, 32));
+        canvas.set_draw_color(orig_color);
     }
 
     fn draw_segments(&self, _canvas: &mut Canvas<Window>) {
@@ -225,12 +235,32 @@ impl SnekGame {
         // alternating colors.  
     }
 
-    fn draw_berries(&self, _canvas: &mut Canvas<Window>) {
-
+    fn draw_berries(&self, canvas: &mut Canvas<Window>) {
+        const BERRY_COLOR: Color = Color::RGB(255, 0, 0);
+        let mut berries = self.board.clone();
+        berries.retain(|_, v| v.clone() == SnekObject::Berry);
+        let orig_color = canvas.draw_color();
+        canvas.set_draw_color(BERRY_COLOR);
+        for pos in berries.iter() {
+            let x = pos.0.x * 32;
+            let y = pos.0.y * 32;
+            canvas.fill_rect(Rect::new(x, y, 32, 32));
+        }
+        canvas.set_draw_color(orig_color);
     }
 
-    fn draw_rocks(&self, _canvas: &mut Canvas<Window>) {
-
+    fn draw_rocks(&self, canvas: &mut Canvas<Window>) {
+        const ROCK_COLOR: Color = Color::RGB(120, 120, 120);
+        let mut rocks = self.board.clone();
+        rocks.retain(|_, v| v.clone() == SnekObject::Rock);
+        let orig_color = canvas.draw_color();
+        canvas.set_draw_color(ROCK_COLOR);
+        for pos in rocks.iter() {
+            let x = pos.0.x * 32;
+            let y = pos.0.y * 32;
+            canvas.fill_rect(Rect::new(x, y, 32, 32));
+        }
+        canvas.set_draw_color(orig_color);
     }
 
     /* Draw the game grid. */
