@@ -1,16 +1,21 @@
+#![allow(dead_code)]
+
+
 use std::collections::HashMap;
 use std::fmt;
 
-use colored::{ColoredString, Colorize};
+use colored::{Colorize};
 
-use sdl2::pixels::{Color, PixelFormatEnum};
+use sdl2::pixels::{Color};
 use sdl2::rect::Point;
 use sdl2::render::{Canvas};
-use sdl2::surface::Surface;
+// use sdl2::surface::Surface;
 use sdl2::video::{Window};
 
+// TODO; have a struct for points in the game board.  Replace all x, y function calls.
+
 #[derive(Debug)]
-enum SnekDirection {
+pub enum SnekDirection {
     North,
     East,
     West,
@@ -37,7 +42,6 @@ pub struct SnekGame {
 
     snek_head_pos: (i32, i32),
     snek_head_dir: SnekDirection,
-    snek_length: usize,
     snek_segments: Vec<(usize, usize)>,
     snek_segments_pending: usize,
 }
@@ -47,7 +51,6 @@ impl SnekGame {
     pub fn new(xsize: usize, ysize: usize) -> SnekGame {
         let snek_head_pos = (10, 10);
         let snek_head_dir = SnekDirection::East;
-        let snek_length = 3;
         let mut game = SnekGame {
                 game_over: false,
                 xsize,
@@ -55,7 +58,6 @@ impl SnekGame {
                 board: HashMap::new(),
                 snek_head_pos,
                 snek_head_dir,
-                snek_length,
                 snek_segments: Vec::new(),
                 snek_segments_pending: 6,
         };
@@ -67,10 +69,18 @@ impl SnekGame {
         // }
 
         game.set_cell(14, 10, SnekObject::Berry);
-        let mut ticks = 0;
         game.set_cell(20, 10, SnekObject::Rock);
         game
     }
+
+    fn add_berry(&mut self, _x: usize, _y: usize) {
+
+    }
+
+    fn add_rock(&mut self, _x: usize, _y: usize) {
+
+    }
+
 
     // TODO: Is this actually needed?
     fn coord_to_index(&self, x: usize, y: usize) -> usize {
@@ -83,12 +93,12 @@ impl SnekGame {
      */
     fn set_cell(&mut self, x: usize, y: usize, obj: SnekObject) {
         /* Sanity check on bounds. */
-        if x < 0 || x >= self.xsize || y < 0 || y > self.ysize {
+        if x >= self.xsize || y > self.ysize {
             return;
         }
       
-        let x: usize = x.try_into().unwrap();
-        let y: usize = y.try_into().unwrap();
+        // let x: usize = x.try_into().unwrap();
+        // let y: usize = y.try_into().unwrap();
 
         /* If the cell was already occupied, clear it. */
         if self.get_cell(x as i32, y as i32) != SnekObject::Empty {
@@ -97,7 +107,7 @@ impl SnekGame {
 
 
         /* Populate the cell with the specified SnekObject. */
-        self.board.insert((x, y), obj.clone());
+        self.board.insert((x, y), obj);
     }
 
     /* Get the contents of a cell on the gameboard.  If the
@@ -182,8 +192,8 @@ impl SnekGame {
 
         /* Clear last round's segments from the board. */
         for i in 0..self.snek_segments.len() {
-            let segx = self.snek_segments[i].clone().0;
-            let segy = self.snek_segments[i].clone().1;
+            let segx = self.snek_segments[i].0;
+            let segy = self.snek_segments[i].1;
             self.board.remove(&(segx, segy));
         }
 
@@ -201,8 +211,8 @@ impl SnekGame {
         }
         
         for i in 0..self.snek_segments.len() {
-            let segx = self.snek_segments[i].clone().0;
-            let segy = self.snek_segments[i].clone().1;
+            let segx = self.snek_segments[i].0;
+            let segy = self.snek_segments[i].1;
             self.set_cell(segx, segy, SnekObject::Segment);
         }
 
@@ -215,20 +225,20 @@ impl SnekGame {
         
     }
 
-    fn draw_head(&self, canvas: &mut Canvas<Window>) {
+    fn draw_head(&self, _canvas: &mut Canvas<Window>) {
 
     }
 
-    fn draw_segments(&self, canvas: &mut Canvas<Window>) {
+    fn draw_segments(&self, _canvas: &mut Canvas<Window>) {
         // iterate over segment vector, drawing each in
         // alternating colors.  
     }
 
-    fn draw_berries(&self, canvas: &mut Canvas<Window>) {
+    fn draw_berries(&self, _canvas: &mut Canvas<Window>) {
 
     }
 
-    fn draw_rocks(&self, canvas: &mut Canvas<Window>) {
+    fn draw_rocks(&self, _canvas: &mut Canvas<Window>) {
 
     }
 
@@ -296,9 +306,9 @@ impl fmt::Display for SnekGame {
                     _ => write!(f, "_")?,
                 }
             }
-            write!(f, "\n")?
+            writeln!(f)?;
         }
-        write!(f, "\n")
+        writeln!(f)
     }
 }
 

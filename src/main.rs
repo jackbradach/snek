@@ -36,7 +36,7 @@ fn main() -> Result<(), String> {
     let mut game = SnekGame::new(32, 24);
     let mut ticks = 0;
     'running: loop {
-        const FRAMES_PER_SEC: u32 = 60;
+        const _FRAMES_PER_SEC: u32 = 60;
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -62,7 +62,7 @@ fn main() -> Result<(), String> {
         }
         
         // ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMES_PER_SEC));
-        ::std::thread::sleep(Duration::new(1, 0)); // 1 second delay for debug
+        ::std::thread::sleep(Duration::new(0, 500_000_000)); // 1 second delay for debug
         ticks += 1;
     }
 
