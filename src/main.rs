@@ -52,8 +52,6 @@ fn main() -> Result<(), String> {
         game.draw(&mut canvas);
         canvas.present();
 
-        println!("Tick = {}", ticks);
-        println!("{:?}", game);
         println!("{}", game);
 
         if game.game_over {

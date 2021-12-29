@@ -67,7 +67,7 @@ impl SnekGame {
                 snek_head_pos,
                 snek_head_dir,
                 snek_segments: Vec::new(),
-                snek_segments_pending: 6,
+                snek_segments_pending: 3,
         };
         game.set_cell(&snek_head_pos, SnekObject::Head);
         // for i in 0..snek_length {
@@ -214,6 +214,7 @@ impl SnekGame {
 
     pub fn draw(&self, canvas: &mut Canvas<Window>) {
         self.draw_head(canvas);
+        self.draw_segments(canvas);
         self.draw_rocks(canvas);
         self.draw_berries(canvas);
         self.draw_grid(canvas);
@@ -221,18 +222,37 @@ impl SnekGame {
 
     fn draw_head(&self, canvas: &mut Canvas<Window>) {
         const HEAD_COLOR: Color = Color::RGB(0, 80, 80);
+        const FACE_COLOR: Color = Color::RGB(255, 80, 80);
+        const FACE_WIDTH: u32 = 4;
         let pos = self.snek_head_pos;
         let x = pos.x * 32;
         let y = pos.y * 32;
         let orig_color = canvas.draw_color();
         canvas.set_draw_color(HEAD_COLOR);
         canvas.fill_rect(Rect::new(x, y, 32, 32));
+        canvas.set_draw_color(FACE_COLOR);
+        // match self.snek_head_dir {
+            // SnekDirection::North => { canvas.fill_rect(Rect::new(x, y, 32, FACE_WIDTH)); },
+            // SnekDirection::East => { canvas.fill_rect(Rect::new(x+32 - FACE_WIDTH, y, FACE_WIDTH, 32)); },
+            // SnekDirection::West => { canvas.fill_rect(Rect::new(x, y, 32, 2)); },
+            // SnekDirection::South => { canvas.fill_rect(Rect::new(x, y, 32, 1)); },
+        // }
+
         canvas.set_draw_color(orig_color);
     }
 
-    fn draw_segments(&self, _canvas: &mut Canvas<Window>) {
-        // iterate over segment vector, drawing each in
-        // alternating colors.  
+    fn draw_segments(&self, canvas: &mut Canvas<Window>) {
+        const SEGMENT_COLOR: Color = Color::RGB(255, 255, 0);
+        let mut segments = self.board.clone();
+        segments.retain(|_, v| v.clone() == SnekObject::Segment);
+        let orig_color = canvas.draw_color();
+        canvas.set_draw_color(SEGMENT_COLOR);
+        for pos in segments.iter() {
+            let x = pos.0.x * 32;
+            let y = pos.0.y * 32;
+            canvas.fill_rect(Rect::new(x, y, 32, 32));
+        }
+        canvas.set_draw_color(orig_color);
     }
 
     fn draw_berries(&self, canvas: &mut Canvas<Window>) {
