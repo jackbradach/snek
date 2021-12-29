@@ -3,6 +3,7 @@
 
 use std::collections::HashMap;
 use std::fmt;
+use std::hash::Hash;
 
 use colored::{Colorize};
 
@@ -32,24 +33,30 @@ enum SnekObject {
     Wall,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct SnekPosition {
+    x: i32,
+    y: i32,
+}
+
 #[derive(Debug)]
 pub struct SnekGame {
     pub game_over: bool,
     xsize: usize,
     ysize: usize,
     // FIXME - is board needed?  Maybe just have Hashmaps of objects.
-    board: HashMap<(usize, usize), SnekObject>,
+    board: HashMap<SnekPosition, SnekObject>,
 
-    snek_head_pos: (i32, i32),
+    snek_head_pos: SnekPosition,
     snek_head_dir: SnekDirection,
-    snek_segments: Vec<(usize, usize)>,
+    snek_segments: Vec<SnekPosition>,
     snek_segments_pending: usize,
 }
 
 impl SnekGame {
 
     pub fn new(xsize: usize, ysize: usize) -> SnekGame {
-        let snek_head_pos = (10, 10);
+        let snek_head_pos = SnekPosition { x: 10, y: 10, };
         let snek_head_dir = SnekDirection::East;
         let mut game = SnekGame {
                 game_over: false,
@@ -61,53 +68,45 @@ impl SnekGame {
                 snek_segments: Vec::new(),
                 snek_segments_pending: 6,
         };
-        game.set_cell(snek_head_pos.0 as usize, snek_head_pos.1 as usize, SnekObject::Head);
+        game.set_cell(&snek_head_pos, SnekObject::Head);
         // for i in 0..snek_length {
             // let seg_x = snek_head_pos.0 - 1 - i as i32;
             // game.set_cell((snek_head_pos.0 - 1 - i as i32) as usize, snek_head_pos.1 as usize, SnekObject::Segment);
             // self.snek_seg_pos.push(())
         // }
-
-        game.set_cell(14, 10, SnekObject::Berry);
-        game.set_cell(20, 10, SnekObject::Rock);
+        
+        let berry_pos = SnekPosition { x: 14, y: 10, };
+        game.set_cell(&berry_pos, SnekObject::Berry);
+        let rock_pos = SnekPosition { x: 20, y: 10, };
+        game.set_cell(&rock_pos, SnekObject::Rock);
         game
     }
 
-    fn add_berry(&mut self, _x: usize, _y: usize) {
+    fn add_berry(&mut self, _pos: SnekPosition) {
 
     }
 
-    fn add_rock(&mut self, _x: usize, _y: usize) {
+    fn add_rock(&mut self, _pos: SnekPosition) {
 
-    }
-
-
-    // TODO: Is this actually needed?
-    fn coord_to_index(&self, x: usize, y: usize) -> usize {
-        y * self.xsize + x
     }
 
     /* Set a cell on the gameboard to a particular object.  If
      * the cell is outside the bounds of the board, this is a no-op,
      * although should possibly be an error?
      */
-    fn set_cell(&mut self, x: usize, y: usize, obj: SnekObject) {
+    fn set_cell(&mut self, pos: &SnekPosition, obj: SnekObject) {
         /* Sanity check on bounds. */
-        if x >= self.xsize || y > self.ysize {
+        if pos.x >= self.xsize as i32 || pos.y >= self.ysize as i32 {
             return;
         }
-      
-        // let x: usize = x.try_into().unwrap();
-        // let y: usize = y.try_into().unwrap();
 
         /* If the cell was already occupied, clear it. */
-        if self.get_cell(x as i32, y as i32) != SnekObject::Empty {
-            self.board.remove(&(x, y));
+        if self.get_cell(pos) != SnekObject::Empty {
+            self.board.remove(pos);
         }
 
-
         /* Populate the cell with the specified SnekObject. */
-        self.board.insert((x, y), obj);
+        self.board.insert(*pos, obj);
     }
 
     /* Get the contents of a cell on the gameboard.  If the
@@ -116,15 +115,15 @@ impl SnekGame {
      * usize to make it easy to iterate over adjacent cells
      * which might land outside of the board.
      */
-    fn get_cell(&self, x: i32, y: i32) -> SnekObject {
+    fn get_cell(&self, pos: &SnekPosition) -> SnekObject {
         let ysize: i32 = self.ysize.try_into().unwrap();
         let xsize: i32 = self.xsize.try_into().unwrap();
-        if x < 0 || x >= xsize || y < 0 || y > ysize {
+        if pos.x < 0 || pos.x >= xsize || pos.y < 0 || pos.y > ysize {
             return SnekObject::Wall;
         }
-        let x: usize = x.try_into().unwrap();
-        let y: usize = y.try_into().unwrap();
-        if let Some(cell) = self.board.get(&(x, y)) {
+        // let x: usize = x.try_into().unwrap();
+        // let y: usize = y.try_into().unwrap();
+        if let Some(cell) = self.board.get(pos) {
             cell.clone()
         } else {
             SnekObject::Empty
@@ -143,41 +142,40 @@ impl SnekGame {
         }
 
         // Snek moves one step in facing direction
-        let (x, y) = self.snek_head_pos;
-        let mut xnew = x;
-        let mut ynew = y;
+        let pos = self.snek_head_pos;
+        let mut new_pos = pos;
         match self.snek_head_dir {
             SnekDirection::North => {
-                ynew -= 1;
+                new_pos.y -= 1;
             }
             SnekDirection::East => {
-                xnew += 1;
+                new_pos.x += 1;
             }
             SnekDirection::West => {
-                xnew -= 1;
+                new_pos.x -= 1;
             }
             SnekDirection::South => {
-                ynew += 1;
+                new_pos.y += 1;
             }
         }
 
-        match self.get_cell(xnew, ynew) {
+        match self.get_cell(&new_pos) {
             SnekObject::Berry => {
-                println!("Snek ate a berry @ ({}, {})!", xnew, ynew);
+                println!("Snek ate a berry @ ({}, {})!", new_pos.x, new_pos.y);
                 self.snek_segments_pending += 1;
             },
             SnekObject::Wall => {
-                println!("Snek hit the wall @ ({}, {})!", xnew, ynew);
+                println!("Snek hit the wall @ ({}, {})!", new_pos.x, new_pos.y);
                 self.game_over = true;
                 return;
             },
             SnekObject::Rock => {
-                println!("Snek hit a rock @ ({}, {})!", xnew, ynew);
+                println!("Snek hit a rock @ ({}, {})!", new_pos.x, new_pos.y);
                 self.game_over = true;
                 return;
             },
             SnekObject::Segment => {
-                println!("Snek hit Snek @ ({}, {})!", xnew, ynew);
+                println!("Snek hit Snek @ ({}, {})!", new_pos.x, new_pos.y);
                 self.game_over = true;
                 return;
             },
@@ -185,44 +183,37 @@ impl SnekGame {
         }
 
         /* Move the head on the board and update the head position. */
-        self.board.remove(&(x.try_into().unwrap(), y.try_into().unwrap()));
-        self.set_cell(xnew.try_into().unwrap(), ynew.try_into().unwrap(), SnekObject::Head);
-        self.snek_head_pos = (xnew, ynew);
-
+        self.board.remove(&pos);
+        // NOTE: stopped SnakePosition refactor here.
+        self.set_cell(&new_pos, SnekObject::Head);
+        self.snek_head_pos = new_pos;
 
         /* Clear last round's segments from the board. */
         for i in 0..self.snek_segments.len() {
-            let segx = self.snek_segments[i].0;
-            let segy = self.snek_segments[i].1;
-            self.board.remove(&(segx, segy));
+            self.board.remove(&self.snek_segments[i].clone());
         }
 
         /* Update the segment positions.  If we have segments waiting to be appended to Snek,
          * insert a new one at current head (x,y).  If head element (x,y) == head (x,y), don't
          * draw it and don't pop tail. */
         if self.snek_segments_pending > 0 {
-            self.snek_segments.insert(0, (x as usize, y as usize));
+            self.snek_segments.insert(0, pos);
             self.snek_segments_pending -= 1;
         }
 
-        if self.snek_segments[0] != (x as usize, y as usize) {
-            self.snek_segments.insert(0, (x as usize, y as usize));
+        if self.snek_segments[0] != pos {
+            self.snek_segments.insert(0, pos);
             self.snek_segments.pop();
         }
         
         for i in 0..self.snek_segments.len() {
-            let segx = self.snek_segments[i].0;
-            let segy = self.snek_segments[i].1;
-            self.set_cell(segx, segy, SnekObject::Segment);
+            self.set_cell(&self.snek_segments[i].clone(), SnekObject::Segment);
         }
-
-        
-
     }
 
     pub fn draw(&self, canvas: &mut Canvas<Window>) {
         self.draw_grid(canvas);
-        
+        self.draw_head(canvas);
     }
 
     fn draw_head(&self, _canvas: &mut Canvas<Window>) {
@@ -281,7 +272,8 @@ impl fmt::Display for SnekGame {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for y in 0..self.ysize {
             for x in 0..self.xsize {
-                let obj = self.get_cell(x as i32, y as i32);
+                let pos: SnekPosition = SnekPosition { x: x as i32, y: y as i32, };
+                let obj = self.get_cell(&pos);
                 match obj {
                     SnekObject::Berry => {
                         write!(f, "{}", "▄".to_string().red().bold())?
