@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::fmt;
 use std::hash::Hash;
-
+use rand::Rng;
 use colored::{Colorize};
 
 use sdl2::pixels::{Color};
@@ -83,12 +83,27 @@ impl SnekGame {
         game
     }
 
-    fn add_berry(&mut self, _pos: SnekPosition) {
-
+    /* Add a berry in a random, empty cell. */
+    fn add_berry(&mut self) {
+        self.add_random_object(SnekObject::Berry);
     }
 
-    fn add_rock(&mut self, _pos: SnekPosition) {
+    /* Add a rock in a random, empty cell. */
+    fn add_rock(&mut self) {
+        self.add_random_object(SnekObject::Rock);
+    }
 
+    fn add_random_object(&mut self, obj: SnekObject) {
+        let mut rng = rand::thread_rng();
+        loop {
+            let x: i32 = rng.gen_range(0..self.xsize).try_into().unwrap();
+            let y: i32 = rng.gen_range(0..self.ysize).try_into().unwrap();
+            let mut berry_pos: SnekPosition = SnekPosition { x, y };
+            if self.get_cell(&berry_pos) == SnekObject::Empty {
+                self.set_cell(&berry_pos, obj);
+                break;
+            }
+        }
     }
 
     /* Set a cell on the gameboard to a particular object.  If
@@ -164,6 +179,8 @@ impl SnekGame {
             SnekObject::Berry => {
                 println!("Snek ate a berry @ ({}, {})!", new_pos.x, new_pos.y);
                 self.snek_segments_pending += 1;
+                self.add_berry();
+                self.add_rock();
             },
             SnekObject::Wall => {
                 println!("Snek hit the wall @ ({}, {})!", new_pos.x, new_pos.y);
@@ -229,7 +246,7 @@ impl SnekGame {
         let y = pos.y * 32;
         let orig_color = canvas.draw_color();
         canvas.set_draw_color(HEAD_COLOR);
-        canvas.fill_rect(Rect::new(x, y, 32, 32));
+        let _ = canvas.fill_rect(Rect::new(x, y, 32, 32));
         canvas.set_draw_color(FACE_COLOR);
         // match self.snek_head_dir {
             // SnekDirection::North => { canvas.fill_rect(Rect::new(x, y, 32, FACE_WIDTH)); },
@@ -250,7 +267,7 @@ impl SnekGame {
         for pos in segments.iter() {
             let x = pos.0.x * 32;
             let y = pos.0.y * 32;
-            canvas.fill_rect(Rect::new(x, y, 32, 32));
+            let _ =canvas.fill_rect(Rect::new(x, y, 32, 32));
         }
         canvas.set_draw_color(orig_color);
     }
@@ -264,7 +281,7 @@ impl SnekGame {
         for pos in berries.iter() {
             let x = pos.0.x * 32;
             let y = pos.0.y * 32;
-            canvas.fill_rect(Rect::new(x, y, 32, 32));
+            let _ = canvas.fill_rect(Rect::new(x, y, 32, 32));
         }
         canvas.set_draw_color(orig_color);
     }
@@ -278,7 +295,7 @@ impl SnekGame {
         for pos in rocks.iter() {
             let x = pos.0.x * 32;
             let y = pos.0.y * 32;
-            canvas.fill_rect(Rect::new(x, y, 32, 32));
+            let _ = canvas.fill_rect(Rect::new(x, y, 32, 32));
         }
         canvas.set_draw_color(orig_color);
     }

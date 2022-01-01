@@ -5,7 +5,7 @@ use std::time::Duration;
 
 // use snek;
 mod snek;
-use snek::SnekGame;
+use snek::{SnekDirection, SnekGame};
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
@@ -36,7 +36,7 @@ fn main() -> Result<(), String> {
     let mut game = SnekGame::new(32, 24);
     let mut ticks = 0;
     'running: loop {
-        const _FRAMES_PER_SEC: u32 = 60;
+        const FRAMES_PER_SEC: u32 = 10;
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. }
@@ -44,9 +44,32 @@ fn main() -> Result<(), String> {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'running,
+                
+                Event::KeyDown {
+                    keycode: Some(Keycode::Up),
+                    ..
+                } => { game.set_snekdir(SnekDirection::North); },
+
+                Event::KeyDown {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => { game.set_snekdir(SnekDirection::East); },
+
+                Event::KeyDown {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => { game.set_snekdir(SnekDirection::West); },
+
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => { game.set_snekdir(SnekDirection::South); },
+
                 _ => {}
             }
         }
+
+        
         canvas.clear();
         game.step();
         game.draw(&mut canvas);
@@ -59,8 +82,8 @@ fn main() -> Result<(), String> {
             break 'running;
         }
         
-        // ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMES_PER_SEC));
-        ::std::thread::sleep(Duration::new(0, 500_000_000)); // 1 second delay for debug
+        ::std::thread::sleep(Duration::new(0, 1_000_000_000u32 / FRAMES_PER_SEC));
+        // ::std::thread::sleep(Duration::new(0, 500_000_000)); // 1 second delay for debug
         ticks += 1;
     }
 
