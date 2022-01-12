@@ -16,7 +16,7 @@ use sdl2::video::{Window};
 
 // TODO; have a struct for points in the game board.  Replace all x, y function calls.
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum SnekDirection {
     North,
     East,
@@ -146,7 +146,17 @@ impl SnekGame {
         }
     }
 
+    /* Updates Snek's direction.  If you try to turn back on yourself,
+     * it becomes a no-op.
+     */
     pub fn set_snekdir(&mut self, dir: SnekDirection) {
+        let curdir = &self.snek_head_dir;
+        match curdir {
+            SnekDirection::North => { if dir == SnekDirection::South { return; } },
+            SnekDirection::East => { if dir == SnekDirection::West { return; } },
+            SnekDirection::West => { if dir == SnekDirection::East { return; } },
+            SnekDirection::South => { if dir == SnekDirection::North { return; } },
+        }
         self.snek_head_dir = dir;
     }
 
@@ -177,23 +187,19 @@ impl SnekGame {
 
         match self.get_cell(&new_pos) {
             SnekObject::Berry => {
-                println!("Snek ate a berry @ ({}, {})!", new_pos.x, new_pos.y);
                 self.snek_segments_pending += 1;
                 self.add_berry();
                 self.add_rock();
             },
             SnekObject::Wall => {
-                println!("Snek hit the wall @ ({}, {})!", new_pos.x, new_pos.y);
                 self.game_over = true;
                 return;
             },
             SnekObject::Rock => {
-                println!("Snek hit a rock @ ({}, {})!", new_pos.x, new_pos.y);
                 self.game_over = true;
                 return;
             },
             SnekObject::Segment => {
-                println!("Snek hit Snek @ ({}, {})!", new_pos.x, new_pos.y);
                 self.game_over = true;
                 return;
             },
@@ -202,7 +208,6 @@ impl SnekGame {
 
         /* Move the head on the board and update the head position. */
         self.board.remove(&pos);
-        // NOTE: stopped SnakePosition refactor here.
         self.set_cell(&new_pos, SnekObject::Head);
         self.snek_head_pos = new_pos;
 
