@@ -4,8 +4,8 @@ use sdl2::pixels::Color;
 use std::time::Duration;
 
 // use snek;
-mod snek;
-use snek::{SnekDirection, SnekGame};
+// mod snek;
+use snek::snek::{SnekDirection, SnekGame};
 
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;

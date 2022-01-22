@@ -1,6 +1,4 @@
 #![allow(dead_code)]
-
-
 use std::collections::HashMap;
 use std::fmt;
 use std::hash::Hash;
@@ -98,7 +96,7 @@ impl SnekGame {
         loop {
             let x: i32 = rng.gen_range(0..self.xsize).try_into().unwrap();
             let y: i32 = rng.gen_range(0..self.ysize).try_into().unwrap();
-            let mut berry_pos: SnekPosition = SnekPosition { x, y };
+            let berry_pos: SnekPosition = SnekPosition { x, y };
             if self.get_cell(&berry_pos) == SnekObject::Empty {
                 self.set_cell(&berry_pos, obj);
                 break;
@@ -149,6 +147,9 @@ impl SnekGame {
     /* Updates Snek's direction.  If you try to turn back on yourself,
      * it becomes a no-op.
      */
+    // FIXME: 2022/01/11 - jbradach - this doesn't quite cover everything.  If I hit a full loop
+    // FIXME: faster than a "tick" I can crash into myself in the same direction that gets drawn.
+    // FIXME: ...do I need to delay a frame?  Or make it draw one more past game over...
     pub fn set_snekdir(&mut self, dir: SnekDirection) {
         let curdir = &self.snek_head_dir;
         match curdir {
@@ -234,12 +235,50 @@ impl SnekGame {
         }
     }
 
+    // Need a translate snakepos on the board to xy on the canvas.
+    fn translate_snakepos_to_pos(&self, _canvas: &Canvas<Window>) -> (usize, usize) {
+        (0, 0)
+    }
+
     pub fn draw(&self, canvas: &mut Canvas<Window>) {
+        self.draw_board(canvas);
         self.draw_head(canvas);
         self.draw_segments(canvas);
         self.draw_rocks(canvas);
         self.draw_berries(canvas);
-        self.draw_grid(canvas);
+        // self.draw_grid(canvas);
+    }
+
+    fn draw_board(&self, canvas: &mut Canvas<Window>) {
+        let (max_x, max_y) = canvas.output_size().unwrap();
+        let BORDER_COLOR = Color::RGB(0, 200, 0);
+        let board_max_x = 3 * (max_x / 4);
+        let board_max_y = max_y;
+        // Draw line around full canvas, 3-5 pixel thickness.  Rounded borders.
+        // Draw line at 3/4ths (2/3rds or other fraction?) vertically
+        // Left is gameboard, right is "game status"
+        // Add "Snek!" text to status
+        // Maybe animate it?
+        // It should be a TTF font, C64?
+        let (x1, y1) = (0, 0);
+        let (x2, y2) = (board_max_x, board_max_y);
+        
+        // self.draw_line(&self, (x1, y1), (x2, y2));
+        canvas.set_draw_color(BORDER_COLOR);
+        canvas.set_draw_color(
+            Color {
+                r: BORDER_COLOR.r / 2,
+                g: BORDER_COLOR.g / 2,
+                b: BORDER_COLOR.b / 2,
+                a: BORDER_COLOR.a,
+            }
+        );
+        
+
+
+
+        println!("{}, {}", board_max_x, board_max_y);
+        
     }
 
     fn draw_head(&self, canvas: &mut Canvas<Window>) {

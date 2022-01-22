@@ -1,11 +1,15 @@
 [package]
 name = "snek"
 version = "0.1.0"
+authors = ["Jack Bradach <jack@bradach.net>"]
 edition = "2021"
 
 [dependencies]
 clap = "3.0.0-rc.8"
 colored = "2.0.0"
 rand = "0.8.4"
+rusqlite = "0.26.3"
 sdl2 = "0.35.1"
-
+chrono = "0.4.19"
+chrono-tz = "0.6.1"
+tempfile = "3.3.0"

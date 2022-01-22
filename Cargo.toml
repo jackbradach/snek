@@ -2,4 +2,5 @@
 
 members = [
     "snek",
+    "snek-wasm",
 ]
